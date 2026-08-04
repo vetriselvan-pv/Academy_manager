@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache install -D tailwindcss @tailwindcss/vite)",
+      "Bash(rm -f src/App.css src/assets/react.svg src/assets/vite.svg src/assets/hero.png public/icons.svg)",
+      "Bash(rmdir src/assets)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(npx oxlint *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache install -D @tanstack/react-query-devtools)",
+      "Bash(npx vite *)",
+      "Bash(mongosh --eval \"db.runCommand\\({ping:1}\\)\" --quiet)",
+      "Bash(brew services *)",
+      "Bash(docker info *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/src/main.tsx)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache ls playwright)",
+      "Read(//Users/vetriselvan1.p/Library/Caches/ms-playwright/**)",
+      "Bash(npx --yes -p playwright@latest playwright --version)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache install -D playwright)",
+      "Bash(node /private/tmp/claude-502/-Users-vetriselvan1-p-Documents-personal-vivaacademy/632d68cd-20b8-41b3-a306-7795cfbd3c82/scratchpad/smoke.mjs)",
+      "Bash(node /Users/vetriselvan1.p/Documents/personal/vivaacademy/client/.smoke.mjs)",
+      "Bash(grep -v \"\\\\.so$\\\\|\\\\.dylib$\\\\|\\\\.pak$\")",
+      "Bash(lsof -ti:5173 -sTCP:LISTEN)",
+      "Bash(xargs -r kill)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache uninstall playwright)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache audit)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache view react-router-dom versions --json)",
+      "Bash(npm --cache /private/tmp/claude-502/npm-cache view react-router-dom@8.2.0)"
+    ]
+  }
+}

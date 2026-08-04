@@ -1,0 +1,75 @@
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+
+export interface DataTableColumn<T> {
+  key: string
+  header: string
+  render: (row: T) => ReactNode
+  className?: string
+}
+
+interface DataTableProps<T> {
+  columns: DataTableColumn<T>[]
+  data: T[]
+  rowKey: (row: T) => string
+  isLoading?: boolean
+  emptyState?: ReactNode
+  onRowClick?: (row: T) => void
+}
+
+export function DataTable<T>({ columns, data, rowKey, isLoading, emptyState, onRowClick }: DataTableProps<T>) {
+  if (isLoading) {
+    return <TableSkeleton columnCount={columns.length} />
+  }
+
+  if (data.length === 0 && emptyState) {
+    return <>{emptyState}</>
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table className="w-full text-left text-sm">
+        <thead className="border-b border-slate-100 bg-slate-50/70 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <tr>
+            {columns.map((column) => (
+              <th key={column.key} scope="col" className={cn('px-4 py-3 whitespace-nowrap', column.className)}>
+                {column.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {data.map((row) => (
+            <tr
+              key={rowKey(row)}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              className={cn(onRowClick && 'cursor-pointer hover:bg-slate-50')}
+            >
+              {columns.map((column) => (
+                <td key={column.key} className={cn('px-4 py-3 align-middle text-slate-700', column.className)}>
+                  {column.render(row)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function TableSkeleton({ columnCount }: { columnCount: number }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="animate-pulse divide-y divide-slate-100">
+        {Array.from({ length: 5 }).map((_, rowIndex) => (
+          <div key={rowIndex} className="flex gap-4 px-4 py-4">
+            {Array.from({ length: columnCount }).map((__, colIndex) => (
+              <div key={colIndex} className="h-3.5 flex-1 rounded bg-slate-100" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
