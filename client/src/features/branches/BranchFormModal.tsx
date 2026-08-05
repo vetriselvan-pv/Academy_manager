@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { getApiErrorMessage, getApiFieldErrors } from '@/lib/apiClient'
 import type { Branch } from '@/types/models'
 import { usersApi } from '@/api/users.api'
@@ -47,6 +48,7 @@ export function BranchFormModal({ open, onClose, branch, canEditActiveState }: B
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -115,18 +117,19 @@ export function BranchFormModal({ open, onClose, branch, canEditActiveState }: B
             <Input id="branch-address" {...register('address')} />
           </FormField>
           <FormField label="Manager" htmlFor="branch-manager" error={errors.manager?.message}>
-            <select
-              id="branch-manager"
-              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              {...register('manager')}
-            >
-              <option value="">Select a manager...</option>
-              {admins?.map((admin) => (
-                <option key={admin._id} value={admin._id}>
-                  {admin.name} ({admin.email})
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="manager"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  id="branch-manager"
+                  options={admins?.map((admin) => ({ value: admin._id, label: `${admin.name} (${admin.email})` })) ?? []}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Select a manager..."
+                />
+              )}
+            />
           </FormField>
         </div>
 
