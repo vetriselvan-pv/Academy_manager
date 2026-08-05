@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Ban, GraduationCap, Pencil, Plus } from 'lucide-react'
 import { toast } from 'sonner'
@@ -35,9 +35,7 @@ export function EnrollmentsPage() {
   const canCreate = canManage || studentUser
   const canCancelRows = canManage || studentUser
 
-  const [branchFilter, setBranchFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState<EnrollmentStatus | ''>('')
-  const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState<Record<string, string>>({})
   const [creating, setCreating] = useState(false)
   const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null)
   const [cancelling, setCancelling] = useState<Enrollment | null>(null)
@@ -45,7 +43,7 @@ export function EnrollmentsPage() {
   // Students can't filter by branch and the status filter is applied client-side for them so
   // the full unfiltered list stays available for the "already enrolled" duplicate check below.
   const { data: enrollments, isLoading } = useEnrollments(
-    studentUser ? {} : { branch: branchFilter || undefined, status: statusFilter || undefined },
+    studentUser ? {} : { branch: filters.branch || undefined, status: (filters.status as EnrollmentStatus) || undefined },
   )
 
   const { data: allBranches } = useQuery({
@@ -62,16 +60,24 @@ export function EnrollmentsPage() {
 
   const cancelEnrollment = useCancelEnrollment()
 
-  const visibleEnrollments = (enrollments ?? []).filter((enrollment) => {
-    if (studentUser && statusFilter && enrollment.status !== statusFilter) return false
-    if (search.trim()) {
-      const query = search.trim().toLowerCase()
-      const matches =
-        refLabel(enrollment.student).toLowerCase().includes(query) || refLabel(enrollment.course).toLowerCase().includes(query)
-      if (!matches) return false
-    }
-    return true
-  })
+  const visibleEnrollments = useMemo(() => {
+    if (!enrollments) return []
+    return enrollments.filter((enrollment) => {
+      if (filters.status && enrollment.status !== filters.status) return false
+      if (filters.branch && refId(enrollment.branch) !== filters.branch) return false
+      
+      if (filters.student && !refLabel(enrollment.student).toLowerCase().includes(filters.student.toLowerCase())) return false
+      if (filters.course && !refLabel(enrollment.course).toLowerCase().includes(filters.course.toLowerCase())) return false
+      if (filters.teacher && enrollment.teacher && !refLabel(enrollment.teacher).toLowerCase().includes(filters.teacher.toLowerCase())) return false
+      if (filters.batchTiming && enrollment.batchTiming && !enrollment.batchTiming.toLowerCase().includes(filters.batchTiming.toLowerCase())) return false
+      
+      return true
+    })
+  }, [enrollments, filters])
+
+  function handleFilterChange(key: string, value: string) {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+  }
 
   async function handleCancel() {
     if (!cancelling) return
@@ -85,14 +91,16 @@ export function EnrollmentsPage() {
   }
 
   const columns: DataTableColumn<Enrollment>[] = [
-    { key: 'student', header: 'Student', render: (e) => <span className="font-medium text-slate-900">{refLabel(e.student)}</span> },
-    { key: 'course', header: 'Course', render: (e) => refLabel(e.course) },
-    { key: 'branch', header: 'Branch', render: (e) => refLabel(e.branch) },
-    { key: 'teacher', header: 'Teacher', render: (e) => (e.teacher ? refLabel(e.teacher) : '—') },
-    { key: 'batchTiming', header: 'Batch timing', render: (e) => e.batchTiming || '—' },
+    { key: 'student', header: 'Student', filterable: true, render: (e) => <span className="font-medium text-slate-900">{refLabel(e.student)}</span> },
+    { key: 'course', header: 'Course', filterable: true, render: (e) => refLabel(e.course) },
+    { key: 'branch', header: 'Branch', filterable: true, filterOptions: branchOptions, render: (e) => refLabel(e.branch) },
+    { key: 'teacher', header: 'Teacher', filterable: true, render: (e) => (e.teacher ? refLabel(e.teacher) : '—') },
+    { key: 'batchTiming', header: 'Batch timing', filterable: true, render: (e) => e.batchTiming || '—' },
     {
       key: 'status',
       header: 'Status',
+      filterable: true,
+      filterOptions: STATUS_OPTIONS,
       render: (e) => <Badge tone={STATUS_TONE[e.status]}>{ENROLLMENT_STATUS_LABELS[e.status]}</Badge>,
     },
     { key: 'startDate', header: 'Start date', render: (e) => formatDate(e.startDate) },
@@ -146,39 +154,13 @@ export function EnrollmentsPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        {!studentUser && (
-          <div className="w-56">
-            <Select
-              value={branchFilter}
-              onChange={(event) => setBranchFilter(event.target.value)}
-              placeholder="All branches"
-              options={branchOptions}
-            />
-          </div>
-        )}
-        <div className="w-48">
-          <Select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as EnrollmentStatus | '')}
-            placeholder="All statuses"
-            options={STATUS_OPTIONS}
-          />
-        </div>
-        <div className="w-64">
-          <Input
-            placeholder="Search by student or course"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-      </div>
-
       <DataTable
         columns={columns}
         data={visibleEnrollments}
         rowKey={(e) => e._id}
         isLoading={isLoading}
+        filters={filters}
+        onFilterChange={handleFilterChange}
         emptyState={
           <EmptyState
             icon={GraduationCap}
