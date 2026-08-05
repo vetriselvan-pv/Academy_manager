@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { coursesApi, type CreateCoursePayload, type UpdateCoursePayload } from '@/api/courses.api'
 import type { CourseCategory } from '@/types/enums'
 
-export function useCourses(category?: CourseCategory) {
+export function useCourses(filters?: Record<string, string>) {
   return useQuery({
-    queryKey: ['courses', { category: category ?? null }],
-    queryFn: () => coursesApi.list(category),
+    queryKey: ['courses', filters],
+    queryFn: () => coursesApi.list(filters),
+    placeholderData: keepPreviousData,
   })
 }
 

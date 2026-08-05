@@ -10,9 +10,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Select } from '@/components/ui/Input'
 import { getApiErrorMessage } from '@/lib/apiClient'
 import { formatCurrency } from '@/lib/utils'
+import { useEffect } from 'react'
 import { CATEGORY_LABELS, CourseCategory, Permission } from '@/types/enums'
 import type { Course } from '@/types/models'
 import { CourseFormModal } from './CourseFormModal'
@@ -25,16 +25,23 @@ export function CoursesPage() {
   const canManage = isSuperAdmin(user) || hasPermission(user, Permission.MANAGE_COURSE_CONTENT)
   const canDeactivate = isSuperAdmin(user)
 
-  const [category, setCategory] = useState<CourseCategory | ''>('')
-  const [showInactive, setShowInactive] = useState(false)
+  const [filters, setFilters] = useState<Record<string, string>>({ isActive: 'true' })
+  const [debouncedFilters, setDebouncedFilters] = useState<Record<string, string>>({ isActive: 'true' })
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
   const [creating, setCreating] = useState(false)
   const [deactivating, setDeactivating] = useState<Course | null>(null)
 
-  const { data: courses, isLoading } = useCourses(category || undefined)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters)
+    }, 400)
+    return () => clearTimeout(handler)
+  }, [filters])
+
+  const { data: courses, isLoading } = useCourses(debouncedFilters)
   const deactivateCourse = useDeactivateCourse()
 
-  const visibleCourses = (courses ?? []).filter((course) => showInactive || course.isActive)
+  const visibleCourses = courses ?? []
 
   async function handleDeactivate() {
     if (!deactivating) return
@@ -48,17 +55,24 @@ export function CoursesPage() {
   }
 
   const columns: DataTableColumn<Course>[] = [
-    { key: 'name', header: 'Name', render: (course) => <span className="font-medium text-slate-900">{course.name}</span> },
+    { key: 'name', header: 'Name', filterable: true, render: (course) => <span className="font-medium text-slate-900">{course.name}</span> },
     {
       key: 'category',
       header: 'Category',
+      filterable: true,
+      filterOptions: CATEGORY_OPTIONS,
       render: (course) => <Badge tone="brand">{CATEGORY_LABELS[course.category]}</Badge>,
     },
     { key: 'duration', header: 'Duration', render: (course) => (course.durationMonths ? `${course.durationMonths} mo` : '—') },
     { key: 'fee', header: 'Fee', render: (course) => formatCurrency(course.fee) },
     {
-      key: 'status',
+      key: 'isActive',
       header: 'Status',
+      filterable: true,
+      filterOptions: [
+        { label: 'Active', value: 'true' },
+        { label: 'Inactive', value: 'false' },
+      ],
       render: (course) => <Badge tone={course.isActive ? 'green' : 'slate'}>{course.isActive ? 'Active' : 'Inactive'}</Badge>,
     },
     {
@@ -106,28 +120,15 @@ export function CoursesPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="w-48">
-          <Select
-            value={category}
-            onChange={(event) => setCategory(event.target.value as CourseCategory | '')}
-            placeholder="All categories"
-            options={CATEGORY_OPTIONS}
-          />
-        </div>
-        <Checkbox
-          id="show-inactive-courses"
-          label="Show inactive"
-          checked={showInactive}
-          onChange={(event) => setShowInactive(event.target.checked)}
-        />
-      </div>
+
 
       <DataTable
         columns={columns}
         data={visibleCourses}
         rowKey={(course) => course._id}
         isLoading={isLoading}
+        filters={filters}
+        onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
         emptyState={
           <EmptyState
             icon={BookOpen}

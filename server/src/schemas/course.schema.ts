@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { CourseCategory } from '../types';
 
+export const courseQuerySchema = z.object({
+  name: z.string().optional(),
+  category: z.string().optional(),
+  isActive: z.string().optional(),
+});
+
 export const createCourseSchema = z.object({
   name: z.string().min(2),
   category: z.nativeEnum(CourseCategory),

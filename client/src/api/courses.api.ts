@@ -14,8 +14,8 @@ export interface CreateCoursePayload {
 export type UpdateCoursePayload = Partial<CreateCoursePayload> & { isActive?: boolean }
 
 export const coursesApi = {
-  async list(category?: CourseCategory): Promise<Course[]> {
-    const { data } = await apiClient.get<CoursesResponse>('/courses', { params: { category } })
+  async list(params?: Record<string, string>): Promise<Course[]> {
+    const { data } = await apiClient.get<CoursesResponse>('/courses', { params })
     return data.courses
   },
 

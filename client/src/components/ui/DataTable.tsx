@@ -7,6 +7,7 @@ export interface DataTableColumn<T> {
   render: (row: T) => ReactNode
   className?: string
   filterable?: boolean
+  filterOptions?: { label: string; value: string }[]
 }
 
 interface DataTableProps<T> {
@@ -36,14 +37,28 @@ export function DataTable<T>({ columns, data, rowKey, isLoading, emptyState, onR
               <th key={column.key} scope="col" className={cn('px-4 py-3 whitespace-nowrap', column.className)}>
                 <div>{column.header}</div>
                 {column.filterable && onFilterChange && (
-                  <input
-                    type="text"
-                    value={filters?.[column.key] || ''}
-                    onChange={(e) => onFilterChange(column.key, e.target.value)}
-                    placeholder={`Filter...`}
-                    className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-normal normal-case text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  column.filterOptions ? (
+                    <select
+                      value={filters?.[column.key] || ''}
+                      onChange={(e) => onFilterChange(column.key, e.target.value)}
+                      className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-normal normal-case text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="">All</option>
+                      {column.filterOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={filters?.[column.key] || ''}
+                      onChange={(e) => onFilterChange(column.key, e.target.value)}
+                      placeholder={`Filter...`}
+                      className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-normal normal-case text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )
                 )}
               </th>
             ))}

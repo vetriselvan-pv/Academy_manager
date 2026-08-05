@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { Course } from '../../models/Course';
-import { createCourseSchema, updateCourseSchema } from '../../schemas/course.schema';
+import { createCourseSchema, updateCourseSchema, courseQuerySchema } from '../../schemas/course.schema';
 import { objectId } from '../../schemas/common.schema';
 import { NotFoundError } from '../../utils/errors';
 import { Permission, UserRole } from '../../types';
@@ -9,8 +9,12 @@ export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.addHook('preHandler', fastify.authenticate);
 
   fastify.get('/', async (request) => {
-    const { category } = request.query as { category?: string };
-    const filter = category ? { category } : {};
+    const query = courseQuerySchema.parse(request.query);
+    const filter: any = {};
+    if (query.name) filter.name = { $regex: query.name, $options: 'i' };
+    if (query.category) filter.category = query.category;
+    if (query.isActive) filter.isActive = query.isActive === 'true';
+
     const courses = await Course.find(filter).sort({ name: 1 });
     return { courses };
   });
