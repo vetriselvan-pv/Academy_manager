@@ -3,6 +3,19 @@ import type { StudentResponse, StudentsResponse } from '@/types/api'
 import type { Gender } from '@/types/enums'
 import type { Student } from '@/types/models'
 
+export interface CreateStudentPayload {
+  name: string
+  email: string
+  password?: string
+  phone?: string
+  branch: string
+  dateOfBirth?: string
+  gender?: Gender
+  address?: string
+  guardianName?: string
+  guardianPhone?: string
+}
+
 export interface UpdateStudentPayload {
   name?: string
   phone?: string
@@ -16,6 +29,11 @@ export interface UpdateStudentPayload {
 }
 
 export const studentsApi = {
+  async create(payload: CreateStudentPayload): Promise<Student> {
+    const { data } = await apiClient.post<{ user: Student }>('/auth/register/student', payload)
+    return data.user
+  },
+
   async list(branch?: string): Promise<Student[]> {
     const { data } = await apiClient.get<StudentsResponse>('/students', { params: { branch } })
     return data.students

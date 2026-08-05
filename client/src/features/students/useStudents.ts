@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { studentsApi, type UpdateStudentPayload } from '@/api/students.api'
+import { studentsApi, type CreateStudentPayload, type UpdateStudentPayload } from '@/api/students.api'
+
+export function useCreateStudent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateStudentPayload) => studentsApi.create(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
+  })
+}
 
 export function useStudents(branch?: string) {
   return useQuery({
