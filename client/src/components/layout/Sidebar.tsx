@@ -43,7 +43,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isActive ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900',
+                    isActive ? 'bg-brand-50 text-brand-900' : 'text-zinc-600 hover:bg-brand-50/50 hover:text-brand-900',
                   )
                 }
               >
@@ -61,7 +61,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                         className={({ isActive }) =>
                           cn(
                             'block rounded-lg px-3 py-1.5 text-sm transition-colors',
-                            isActive ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
+                            isActive ? 'bg-brand-50 text-brand-900' : 'text-zinc-500 hover:bg-brand-50/50 hover:text-brand-900',
                           )
                         }
                       >

@@ -6,6 +6,7 @@ export interface DataTableColumn<T> {
   header: string
   render: (row: T) => ReactNode
   className?: string
+  filterable?: boolean
 }
 
 interface DataTableProps<T> {
@@ -15,16 +16,16 @@ interface DataTableProps<T> {
   isLoading?: boolean
   emptyState?: ReactNode
   onRowClick?: (row: T) => void
+  filters?: Record<string, string>
+  onFilterChange?: (key: string, value: string) => void
 }
 
-export function DataTable<T>({ columns, data, rowKey, isLoading, emptyState, onRowClick }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, rowKey, isLoading, emptyState, onRowClick, filters, onFilterChange }: DataTableProps<T>) {
   if (isLoading) {
     return <TableSkeleton columnCount={columns.length} />
   }
 
-  if (data.length === 0 && emptyState) {
-    return <>{emptyState}</>
-  }
+
 
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -33,25 +34,43 @@ export function DataTable<T>({ columns, data, rowKey, isLoading, emptyState, onR
           <tr>
             {columns.map((column) => (
               <th key={column.key} scope="col" className={cn('px-4 py-3 whitespace-nowrap', column.className)}>
-                {column.header}
+                <div>{column.header}</div>
+                {column.filterable && onFilterChange && (
+                  <input
+                    type="text"
+                    value={filters?.[column.key] || ''}
+                    onChange={(e) => onFilterChange(column.key, e.target.value)}
+                    placeholder={`Filter...`}
+                    className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-normal normal-case text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {data.map((row) => (
-            <tr
-              key={rowKey(row)}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              className={cn(onRowClick && 'cursor-pointer hover:bg-slate-50')}
-            >
-              {columns.map((column) => (
-                <td key={column.key} className={cn('px-4 py-3 align-middle text-slate-700', column.className)}>
-                  {column.render(row)}
-                </td>
-              ))}
+          {data.length === 0 && emptyState ? (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-8">
+                {emptyState}
+              </td>
             </tr>
-          ))}
+          ) : (
+            data.map((row) => (
+              <tr
+                key={rowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={cn(onRowClick && 'cursor-pointer hover:bg-slate-50')}
+              >
+                {columns.map((column) => (
+                  <td key={column.key} className={cn('px-4 py-3 align-middle text-slate-700', column.className)}>
+                    {column.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

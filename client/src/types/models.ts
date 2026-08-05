@@ -16,6 +16,7 @@ export interface Branch {
   state?: string
   phone?: string
   email?: string
+  manager?: SuperAdmin | string
   isActive: boolean
   createdAt?: string
   updatedAt?: string

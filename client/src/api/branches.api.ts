@@ -4,19 +4,19 @@ import type { Branch } from '@/types/models'
 
 export interface CreateBranchPayload {
   name: string
-  code: string
   address: string
   city: string
   state?: string
   phone?: string
   email?: string
+  manager?: string
 }
 
 export type UpdateBranchPayload = Partial<CreateBranchPayload> & { isActive?: boolean }
 
 export const branchesApi = {
-  async list(): Promise<Branch[]> {
-    const { data } = await apiClient.get<BranchesResponse>('/branches')
+  async list(params?: Record<string, string>): Promise<Branch[]> {
+    const { data } = await apiClient.get<BranchesResponse>('/branches', { params })
     return data.branches
   },
 

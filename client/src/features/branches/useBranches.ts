@@ -1,10 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { branchesApi, type CreateBranchPayload, type UpdateBranchPayload } from '@/api/branches.api'
 
-export function useBranches() {
+export function useBranches(filters?: Record<string, string>) {
   return useQuery({
-    queryKey: ['branches'],
-    queryFn: () => branchesApi.list(),
+    queryKey: ['branches', filters],
+    queryFn: () => branchesApi.list(filters),
+    placeholderData: keepPreviousData,
   })
 }
 

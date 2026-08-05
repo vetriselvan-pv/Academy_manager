@@ -3,17 +3,17 @@
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  --color-brand-50: #fafafa;
-  --color-brand-100: #f4f4f5;
-  --color-brand-200: #e4e4e7;
-  --color-brand-300: #d4d4d8;
-  --color-brand-400: #a1a1aa;
-  --color-brand-500: #71717a;
-  --color-brand-600: #52525b;
-  --color-brand-700: #3f3f46;
-  --color-brand-800: #27272a;
-  --color-brand-900: #18181b;
-  --color-brand-950: #09090b;
+  --color-brand-50: #e8f5e9;
+  --color-brand-100: #c8e6c9;
+  --color-brand-200: #a5d6a7;
+  --color-brand-300: #81c784;
+  --color-brand-400: #66bb6a;
+  --color-brand-500: #4caf50;
+  --color-brand-600: #43a047;
+  --color-brand-700: #388e3c;
+  --color-brand-800: #2e7d32;
+  --color-brand-900: #1b5e20;
+  --color-brand-950: #0d3b10;
 }
 
 @layer base {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Building2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/auth/AuthContext'
@@ -24,11 +24,23 @@ export function BranchesPage() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
   const [creating, setCreating] = useState(false)
   const [deactivating, setDeactivating] = useState<Branch | null>(null)
+  const [filters, setFilters] = useState<Record<string, string>>({})
+  const [debouncedFilters, setDebouncedFilters] = useState<Record<string, string>>({})
 
-  const { data: branches, isLoading } = useBranches()
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters)
+    }, 400)
+    return () => clearTimeout(handler)
+  }, [filters])
+
+  const { data: branches, isLoading } = useBranches({
+    ...debouncedFilters,
+    ...(showInactive ? {} : { isActive: 'true' }),
+  })
   const deactivateBranch = useDeactivateBranch()
 
-  const visibleBranches = (branches ?? []).filter((branch) => showInactive || branch.isActive)
+  const visibleBranches = branches ?? []
 
   async function handleDeactivate() {
     if (!deactivating) return
@@ -42,10 +54,10 @@ export function BranchesPage() {
   }
 
   const columns: DataTableColumn<Branch>[] = [
-    { key: 'name', header: 'Name', render: (branch) => <span className="font-medium text-slate-900">{branch.name}</span> },
-    { key: 'code', header: 'Code', render: (branch) => <Badge tone="brand">{branch.code}</Badge> },
-    { key: 'city', header: 'City', render: (branch) => branch.city },
-    { key: 'phone', header: 'Phone', render: (branch) => branch.phone || '—' },
+    { key: 'name', header: 'Name', filterable: true, render: (branch) => <span className="font-medium text-slate-900">{branch.name}</span> },
+    { key: 'code', header: 'Code', filterable: true, render: (branch) => <Badge tone="brand">{branch.code}</Badge> },
+    { key: 'city', header: 'City', filterable: true, render: (branch) => branch.city },
+    { key: 'phone', header: 'Phone', filterable: true, render: (branch) => branch.phone || '—' },
     {
       key: 'status',
       header: 'Status',
@@ -110,6 +122,8 @@ export function BranchesPage() {
         data={visibleBranches}
         rowKey={(branch) => branch._id}
         isLoading={isLoading}
+        filters={filters}
+        onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
         emptyState={
           <EmptyState
             icon={Building2}

@@ -13,6 +13,7 @@ import { teacherRoutes } from './modules/teachers/teacher.routes';
 import { studentRoutes } from './modules/students/student.routes';
 import { enrollmentRoutes } from './modules/enrollments/enrollment.routes';
 import { menuRoutes } from './modules/menus/menu.routes';
+import { userRoutes } from './modules/users/user.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -36,6 +37,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(studentRoutes, { prefix: '/api/students' });
   await app.register(enrollmentRoutes, { prefix: '/api/enrollments' });
   await app.register(menuRoutes, { prefix: '/api/menus' });
+  await app.register(userRoutes, { prefix: '/api/users' });
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {
