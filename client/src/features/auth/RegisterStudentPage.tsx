@@ -67,7 +67,7 @@ export function RegisterStudentPage() {
     }
   }
 
-  const activeBranches = (branches ?? []).filter((branch) => branch.isActive)
+  const activeBranches = (branches?.data ?? []).filter((branch: any) => branch.isActive)
 
   return (
     <AuthLayout
@@ -112,7 +112,7 @@ export function RegisterStudentPage() {
             id="branch"
             placeholder={branchesLoading ? 'Loading branches…' : 'Select a branch'}
             disabled={branchesLoading}
-            options={activeBranches.map((branch) => ({ value: branch._id, label: `${branch.name} — ${branch.city}` }))}
+            options={activeBranches.map((branch: any) => ({ value: branch._id, label: `${branch.name} — ${branch.city}` }))}
             {...register('branch')}
           />
         </FormField>

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { NavLink } from 'react-router-dom'
 import { GraduationCap } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { menusApi } from '@/api/menus.api'
 import { cn } from '@/lib/utils'
 import { MenuIcon } from './Icon'
@@ -18,7 +19,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
   const menu = data?.menu ?? []
 
   return (
-    <div className="flex h-full flex-col border-r border-zinc-200 bg-white text-zinc-600">
+    <div className="flex h-full flex-col border-r border-zinc-200/50 bg-white/70 backdrop-blur-xl text-zinc-600">
       <div className="flex h-16 shrink-0 items-center gap-2 px-5 text-zinc-900">
         <GraduationCap className="size-6 text-zinc-900" />
         <span className="text-base font-semibold">Viva Academy</span>
@@ -42,13 +43,24 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                 onClick={onNavigate}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isActive ? 'bg-brand-50 text-brand-900' : 'text-zinc-600 hover:bg-brand-50/50 hover:text-brand-900',
+                    'relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    isActive ? 'text-brand-900' : 'text-zinc-600 hover:text-brand-700',
                   )
                 }
               >
-                <MenuIcon name={item.icon} className="size-4 shrink-0" />
-                {item.label}
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebar-active-pill"
+                        className="absolute inset-0 rounded-xl bg-brand-100/50"
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    <MenuIcon name={item.icon} className="relative z-10 size-4 shrink-0" />
+                    <span className="relative z-10">{item.label}</span>
+                  </>
+                )}
               </NavLink>
 
               {item.children && item.children.length > 0 && (
@@ -60,8 +72,8 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                         onClick={onNavigate}
                         className={({ isActive }) =>
                           cn(
-                            'block rounded-lg px-3 py-1.5 text-sm transition-colors',
-                            isActive ? 'bg-brand-50 text-brand-900' : 'text-zinc-500 hover:bg-brand-50/50 hover:text-brand-900',
+                            'block rounded-lg px-3 py-1.5 text-sm transition-all duration-200',
+                            isActive ? 'bg-brand-50/80 text-brand-900 font-medium' : 'text-zinc-500 hover:bg-brand-50/50 hover:text-brand-700',
                           )
                         }
                       >

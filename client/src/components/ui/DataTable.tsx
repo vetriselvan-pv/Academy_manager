@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export interface DataTableColumn<T> {
   key: string
@@ -76,19 +77,28 @@ export function DataTable<T>({ columns, data, rowKey, isLoading, emptyState, onR
               </td>
             </tr>
           ) : (
-            data.map((row) => (
-              <tr
-                key={rowKey(row)}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={cn(onRowClick && 'cursor-pointer hover:bg-slate-50')}
-              >
-                {columns.map((column) => (
-                  <td key={column.key} className={cn('px-4 py-3 align-middle text-slate-700', column.className)}>
-                    {column.render(row)}
-                  </td>
-                ))}
-              </tr>
-            ))
+            <AnimatePresence mode="popLayout">
+              {data.map((row, index) => (
+                <motion.tr
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, delay: Math.min(index * 0.05, 0.5) }}
+                  key={rowKey(row)}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  className={cn(
+                    'transition-colors duration-200',
+                    onRowClick ? 'cursor-pointer hover:bg-brand-50/50' : 'hover:bg-slate-50/50'
+                  )}
+                >
+                  {columns.map((column) => (
+                    <td key={column.key} className={cn('px-4 py-3 align-middle text-slate-700', column.className)}>
+                      {column.render(row)}
+                    </td>
+                  ))}
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           )}
         </tbody>
       </table>

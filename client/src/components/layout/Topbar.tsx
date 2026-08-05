@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, LogOut, Menu, Settings, User as UserIcon } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, User as UserIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar } from '@/components/ui/Avatar'
@@ -43,7 +43,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
   if (!user) return null
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-zinc-200/50 bg-white/70 backdrop-blur-xl px-4 sm:px-6">
       <button
         type="button"
         onClick={onOpenSidebar}
