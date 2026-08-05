@@ -13,17 +13,19 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { getApiErrorMessage } from '@/lib/apiClient'
 import { formatCurrency } from '@/lib/utils'
 import { useEffect } from 'react'
-import { CATEGORY_LABELS, CourseCategory, Permission } from '@/types/enums'
+import { Permission } from '@/types/enums'
 import type { Course } from '@/types/models'
 import { CourseFormModal } from './CourseFormModal'
 import { useCourses, useDeactivateCourse } from './useCourses'
-
-const CATEGORY_OPTIONS = Object.values(CourseCategory).map((value) => ({ value, label: CATEGORY_LABELS[value] }))
+import { useCourseCategories } from './useCourseCategories'
 
 export function CoursesPage() {
   const { user } = useAuth()
   const canManage = isSuperAdmin(user) || hasPermission(user, Permission.MANAGE_COURSE_CONTENT)
   const canDeactivate = isSuperAdmin(user)
+
+  const { data: categories } = useCourseCategories()
+  const CATEGORY_OPTIONS = (categories ?? []).map((cat) => ({ value: cat._id, label: cat.name }))
 
   const [filters, setFilters] = useState<Record<string, string>>({ isActive: 'true' })
   const [debouncedFilters, setDebouncedFilters] = useState<Record<string, string>>({ isActive: 'true' })
@@ -61,7 +63,7 @@ export function CoursesPage() {
       header: 'Category',
       filterable: true,
       filterOptions: CATEGORY_OPTIONS,
-      render: (course) => <Badge tone="brand">{CATEGORY_LABELS[course.category]}</Badge>,
+      render: (course) => <Badge tone="brand">{typeof course.category === 'object' && course.category !== null ? course.category.name : 'Unknown'}</Badge>,
     },
     { key: 'duration', header: 'Duration', render: (course) => (course.durationMonths ? `${course.durationMonths} mo` : '—') },
     { key: 'fee', header: 'Fee', render: (course) => formatCurrency(course.fee) },

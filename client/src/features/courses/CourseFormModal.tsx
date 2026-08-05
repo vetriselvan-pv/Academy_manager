@@ -1,17 +1,18 @@
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { FormField } from '@/components/ui/FormField'
-import { Input, Select, Textarea } from '@/components/ui/Input'
+import { Input, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { getApiErrorMessage, getApiFieldErrors } from '@/lib/apiClient'
-import { CATEGORY_LABELS, CourseCategory } from '@/types/enums'
 import type { Course } from '@/types/models'
 import { useCreateCourse, useUpdateCourse } from './useCourses'
+import { useCourseCategories } from './useCourseCategories'
 
 const courseFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -27,8 +28,6 @@ const courseFormSchema = z.object({
 
 type CourseFormValues = z.infer<typeof courseFormSchema>
 
-const CATEGORY_OPTIONS = Object.values(CourseCategory).map((value) => ({ value, label: CATEGORY_LABELS[value] }))
-
 interface CourseFormModalProps {
   open: boolean
   onClose: () => void
@@ -42,8 +41,12 @@ export function CourseFormModal({ open, onClose, course, canEditActiveState }: C
   const updateCourse = useUpdateCourse()
   const isSaving = createCourse.isPending || updateCourse.isPending
 
+  const { data: categories } = useCourseCategories({ isActive: 'true' })
+  const CATEGORY_OPTIONS = (categories ?? []).map((cat) => ({ value: cat._id, label: cat.name }))
+
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -54,7 +57,7 @@ export function CourseFormModal({ open, onClose, course, canEditActiveState }: C
     if (!open) return
     reset({
       name: course?.name ?? '',
-      category: course?.category ?? '',
+      category: typeof course?.category === 'object' ? course.category._id : (course?.category ?? ''),
       description: course?.description ?? '',
       durationMonths: course?.durationMonths ? String(course.durationMonths) : '',
       fee: course?.fee !== undefined ? String(course.fee) : '',
@@ -65,7 +68,7 @@ export function CourseFormModal({ open, onClose, course, canEditActiveState }: C
   async function onSubmit(values: CourseFormValues) {
     const payload = {
       name: values.name,
-      category: values.category as CourseCategory,
+      category: values.category,
       description: values.description || undefined,
       durationMonths: values.durationMonths ? Number(values.durationMonths) : undefined,
       fee: Number(values.fee),
@@ -103,7 +106,19 @@ export function CourseFormModal({ open, onClose, course, canEditActiveState }: C
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Category" htmlFor="course-category" error={errors.category?.message} required>
-            <Select id="course-category" options={CATEGORY_OPTIONS} placeholder="Select category" {...register('category')} />
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  id="course-category"
+                  options={CATEGORY_OPTIONS}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Select a category..."
+                />
+              )}
+            />
           </FormField>
           <FormField label="Fee (₹)" htmlFor="course-fee" error={errors.fee?.message} required>
             <Input id="course-fee" inputMode="decimal" {...register('fee')} />

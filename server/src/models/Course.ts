@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { CourseCategory } from '../types';
+
 
 export interface ICourse extends Document {
   name: string;
-  category: CourseCategory;
+  category: mongoose.Types.ObjectId;
   description?: string;
   durationMonths?: number;
   fee: number;
@@ -15,7 +15,7 @@ export interface ICourse extends Document {
 const courseSchema = new Schema<ICourse>(
   {
     name: { type: String, required: true, trim: true },
-    category: { type: String, enum: Object.values(CourseCategory), required: true },
+    category: { type: Schema.Types.ObjectId, ref: 'CourseCategory', required: true },
     description: { type: String },
     durationMonths: { type: Number, min: 1 },
     fee: { type: Number, required: true, min: 0 },

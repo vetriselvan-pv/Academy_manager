@@ -13,17 +13,6 @@ export const TeacherDesignation = {
 } as const
 export type TeacherDesignation = (typeof TeacherDesignation)[keyof typeof TeacherDesignation]
 
-export const CourseCategory = {
-  YOGA: 'YOGA',
-  DANCE: 'DANCE',
-  MUSIC: 'MUSIC',
-  ABACUS: 'ABACUS',
-  TUITION_10TH: 'TUITION_10TH',
-  HINDI_CLASSES: 'HINDI_CLASSES',
-  OTHER: 'OTHER',
-} as const
-export type CourseCategory = (typeof CourseCategory)[keyof typeof CourseCategory]
-
 export const EnrollmentStatus = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
@@ -48,16 +37,6 @@ export const Gender = {
   OTHER: 'OTHER',
 } as const
 export type Gender = (typeof Gender)[keyof typeof Gender]
-
-export const CATEGORY_LABELS: Record<CourseCategory, string> = {
-  YOGA: 'Yoga',
-  DANCE: 'Dance',
-  MUSIC: 'Music',
-  ABACUS: 'Abacus',
-  TUITION_10TH: '10th Tuition',
-  HINDI_CLASSES: 'Hindi Classes',
-  OTHER: 'Other',
-}
 
 export const DESIGNATION_LABELS: Record<TeacherDesignation, string> = {
   INSTRUCTOR: 'Instructor',

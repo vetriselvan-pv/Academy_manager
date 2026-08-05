@@ -12,7 +12,6 @@ import { Card, CardBody } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/ui/StatCard'
-import { CATEGORY_LABELS } from '@/types/enums'
 import { EnrollmentStatus } from '@/types/enums'
 import { refLabel } from '@/types/models'
 
@@ -185,7 +184,7 @@ function StudentDashboard() {
                 <CardBody className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-slate-900">{refLabel(enrollment.course)}</h3>
-                    {course && <Badge tone="brand">{CATEGORY_LABELS[course.category]}</Badge>}
+                    {course && <Badge tone="brand">{typeof course.category === 'object' && course.category !== null ? course.category.name : 'Unknown'}</Badge>}
                   </div>
                   <p className="text-sm text-slate-500">Teacher: {enrollment.teacher ? refLabel(enrollment.teacher) : 'Unassigned'}</p>
                   <p className="text-sm text-slate-500">Batch: {enrollment.batchTiming || 'Not scheduled yet'}</p>

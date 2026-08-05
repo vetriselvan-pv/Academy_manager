@@ -8,6 +8,7 @@ import { authPlugin } from './plugins/auth';
 import { authRoutes } from './modules/auth/auth.routes';
 import { meRoutes } from './modules/me/me.routes';
 import { branchRoutes } from './modules/branches/branch.routes';
+import { courseCategoryRoutes } from './modules/course-categories/courseCategory.routes';
 import { courseRoutes } from './modules/courses/course.routes';
 import { teacherRoutes } from './modules/teachers/teacher.routes';
 import { studentRoutes } from './modules/students/student.routes';
@@ -32,6 +33,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(meRoutes, { prefix: '/api/me' });
   await app.register(branchRoutes, { prefix: '/api/branches' });
+  await app.register(courseCategoryRoutes, { prefix: '/api/course-categories' });
   await app.register(courseRoutes, { prefix: '/api/courses' });
   await app.register(teacherRoutes, { prefix: '/api/teachers' });
   await app.register(studentRoutes, { prefix: '/api/students' });

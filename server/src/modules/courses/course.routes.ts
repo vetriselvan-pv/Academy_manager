@@ -15,13 +15,13 @@ export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
     if (query.category) filter.category = query.category;
     if (query.isActive) filter.isActive = query.isActive === 'true';
 
-    const courses = await Course.find(filter).sort({ name: 1 });
+    const courses = await Course.find(filter).populate('category', 'name').sort({ name: 1 });
     return { courses };
   });
 
   fastify.get('/:id', async (request) => {
     const id = objectId.parse((request.params as { id: string }).id);
-    const course = await Course.findById(id);
+    const course = await Course.findById(id).populate('category', 'name');
     if (!course) {
       throw new NotFoundError('Course not found');
     }

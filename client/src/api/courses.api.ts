@@ -1,11 +1,11 @@
 import { apiClient } from '@/lib/apiClient'
 import type { CourseResponse, CoursesResponse } from '@/types/api'
-import type { CourseCategory } from '@/types/enums'
+
 import type { Course } from '@/types/models'
 
 export interface CreateCoursePayload {
   name: string
-  category: CourseCategory
+  category: string
   description?: string
   durationMonths?: number
   fee: number

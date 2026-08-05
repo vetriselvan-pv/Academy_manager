@@ -11,16 +11,6 @@ export enum TeacherDesignation {
   ACADEMIC_HEAD = 'ACADEMIC_HEAD',
 }
 
-export enum CourseCategory {
-  YOGA = 'YOGA',
-  DANCE = 'DANCE',
-  MUSIC = 'MUSIC',
-  ABACUS = 'ABACUS',
-  TUITION_10TH = 'TUITION_10TH',
-  HINDI_CLASSES = 'HINDI_CLASSES',
-  OTHER = 'OTHER',
-}
-
 export enum EnrollmentStatus {
   ACTIVE = 'ACTIVE',
   COMPLETED = 'COMPLETED',

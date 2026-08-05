@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { coursesApi, type CreateCoursePayload, type UpdateCoursePayload } from '@/api/courses.api'
-import type { CourseCategory } from '@/types/enums'
+
 
 export function useCourses(filters?: Record<string, string>) {
   return useQuery({

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CourseCategory } from '../types';
+import { objectId } from './common.schema';
 
 export const courseQuerySchema = z.object({
   name: z.string().optional(),
@@ -9,7 +9,7 @@ export const courseQuerySchema = z.object({
 
 export const createCourseSchema = z.object({
   name: z.string().min(2),
-  category: z.nativeEnum(CourseCategory),
+  category: objectId,
   description: z.string().optional(),
   durationMonths: z.coerce.number().int().min(1).optional(),
   fee: z.coerce.number().min(0),

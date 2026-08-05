@@ -26,16 +26,6 @@ export const MENU_TREE: MenuItem[] = [
     label: 'Courses',
     path: '/courses',
     icon: 'book',
-    children: [
-      { key: 'courses-list', label: 'All Courses', path: '/courses' },
-      {
-        key: 'courses-manage',
-        label: 'Manage Courses',
-        path: '/courses/manage',
-        roles: [UserRole.SUPER_ADMIN, UserRole.TEACHER],
-        permissions: [Permission.MANAGE_COURSE_CONTENT],
-      },
-    ],
   },
   {
     key: 'teachers',
