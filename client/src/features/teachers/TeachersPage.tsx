@@ -36,16 +36,31 @@ export function TeachersPage() {
 
   const { data: allBranches } = useBranches()
 
-  const [branchFilter, setBranchFilter] = useState<string>(() => (ownBranchIds.length > 0 ? ownBranchIds[0] : ''))
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
   const [creating, setCreating] = useState(false)
   const [deactivating, setDeactivating] = useState<Teacher | null>(null)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
-  const { data: teachers, isLoading } = useTeachers(branchFilter || undefined)
+  const { data: teachers, isLoading } = useTeachers()
   const deactivateTeacher = useDeactivateTeacher()
 
-  // A teacher with a single branch is auto-scoped with no picker shown at all.
-  const showBranchPicker = isAdmin || ownBranchIds.length > 1
+  const filteredTeachers = useMemo(() => {
+    if (!teachers) return []
+    return teachers.filter((teacher) => {
+      if (filters.name && !teacher.name.toLowerCase().includes(filters.name.toLowerCase())) return false
+      if (filters.email && !teacher.email.toLowerCase().includes(filters.email.toLowerCase())) return false
+      if (filters.designation && teacher.designation !== filters.designation) return false
+      if (filters.branches) {
+        const hasBranch = teacher.branches.some(b => refId(b) === filters.branches)
+        if (!hasBranch) return false
+      }
+      return true
+    })
+  }, [teachers, filters])
+
+  function handleFilterChange(key: string, value: string) {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+  }
 
   const branchFilterOptions = isAdmin
     ? (allBranches ?? []).map((branch) => ({ value: branch._id, label: branch.name }))
@@ -74,16 +89,20 @@ export function TeachersPage() {
   }
 
   const columns: DataTableColumn<Teacher>[] = [
-    { key: 'name', header: 'Name', render: (teacher) => <span className="font-medium text-slate-900">{teacher.name}</span> },
-    { key: 'email', header: 'Email', render: (teacher) => teacher.email },
+    { key: 'name', header: 'Name', filterable: true, render: (teacher) => <span className="font-medium text-slate-900">{teacher.name}</span> },
+    { key: 'email', header: 'Email', filterable: true, render: (teacher) => teacher.email },
     {
       key: 'designation',
       header: 'Designation',
+      filterable: true,
+      filterOptions: Object.entries(DESIGNATION_LABELS).map(([value, label]) => ({ value, label })),
       render: (teacher) => <Badge tone="brand">{DESIGNATION_LABELS[teacher.designation]}</Badge>,
     },
     {
       key: 'branches',
       header: 'Branches',
+      filterable: true,
+      filterOptions: branchFilterOptions,
       render: (teacher) => (
         <div className="flex flex-wrap gap-1">
           {teacher.branches.map((branch) => (
@@ -153,24 +172,13 @@ export function TeachersPage() {
         }
       />
 
-      {showBranchPicker && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <div className="w-56">
-            <Select
-              value={branchFilter}
-              onChange={(event) => setBranchFilter(event.target.value)}
-              placeholder={isAdmin ? 'All branches' : undefined}
-              options={branchFilterOptions}
-            />
-          </div>
-        </div>
-      )}
-
       <DataTable
         columns={columns}
-        data={teachers ?? []}
+        data={filteredTeachers}
         rowKey={(teacher) => teacher._id}
         isLoading={isLoading}
+        filters={filters}
+        onFilterChange={handleFilterChange}
         emptyState={
           <EmptyState
             icon={UserRound}
