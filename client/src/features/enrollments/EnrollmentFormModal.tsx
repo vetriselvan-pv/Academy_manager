@@ -72,7 +72,7 @@ function StudentEnrollForm({ onClose, enrollments }: { onClose: () => void; enro
     enrollments.filter((enrollment) => enrollment.status === 'ACTIVE').map((enrollment) => refId(enrollment.course)),
   )
 
-  const availableCourses = (courses ?? []).filter((course) => course.isActive && !activeEnrolledCourseIds.has(course._id))
+  const availableCourses = (courses?.data ?? []).filter((course) => course.isActive && !activeEnrolledCourseIds.has(course._id))
   const courseOptions = availableCourses.map((course) => ({ value: course._id, label: course.name }))
 
   async function onSubmit(values: StudentFormValues) {
@@ -169,7 +169,7 @@ function StaffEnrollForm({ onClose }: { onClose: () => void }) {
   })
 
   const branchOptions = superAdmin
-    ? (allBranches ?? []).map((branch) => ({ value: branch._id, label: branch.name }))
+    ? (allBranches?.data ?? []).map((branch) => ({ value: branch._id, label: branch.name }))
     : (teacher?.branches ?? []).map((branch) => ({ value: refId(branch) ?? '', label: refLabel(branch) }))
 
   useEffect(() => {
@@ -183,21 +183,21 @@ function StaffEnrollForm({ onClose }: { onClose: () => void }) {
     queryKey: ['courses', { category: null }],
     queryFn: () => coursesApi.list(),
   })
-  const courseOptions = (courses ?? []).filter((course) => course.isActive).map((course) => ({ value: course._id, label: course.name }))
+  const courseOptions = (courses?.data ?? []).filter((course) => course.isActive).map((course) => ({ value: course._id, label: course.name }))
 
   const { data: branchStudents, isLoading: studentsLoading } = useQuery({
     queryKey: ['students', { branch: selectedBranch || null }],
-    queryFn: () => studentsApi.list(selectedBranch),
+    queryFn: () => studentsApi.list({ branch: selectedBranch }),
     enabled: !!selectedBranch,
   })
-  const studentOptions = (branchStudents ?? []).map((s) => ({ value: s._id, label: `${s.name} (${s.email})` }))
+  const studentOptions = (branchStudents?.data ?? []).map((s) => ({ value: s._id, label: `${s.name} (${s.email})` }))
 
   const { data: branchTeachers } = useQuery({
     queryKey: ['teachers', { branch: selectedBranch || null }],
-    queryFn: () => teachersApi.list(selectedBranch),
+    queryFn: () => teachersApi.list({ branch: selectedBranch }),
     enabled: !!selectedBranch,
   })
-  const teacherOptions = (branchTeachers ?? []).map((t) => ({ value: t._id, label: t.name }))
+  const teacherOptions = (branchTeachers?.data ?? []).map((t) => ({ value: t._id, label: t.name }))
 
   async function onSubmit(values: StaffFormValues) {
     setFormError(null)

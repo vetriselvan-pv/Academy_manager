@@ -3,7 +3,8 @@ import { Enrollment } from '../../models/Enrollment';
 import { Course } from '../../models/Course';
 import { Student } from '../../models/Student';
 import { createEnrollmentSchema, updateEnrollmentSchema } from '../../schemas/enrollment.schema';
-import { objectId } from '../../schemas/common.schema';
+import { objectId, paginationSchema } from '../../schemas/common.schema';
+import { Teacher } from '../../models/Teacher';
 import { assertBranchAccess } from '../../utils/authHelpers';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import { EnrollmentStatus, Permission, UserRole } from '../../types';
@@ -12,7 +13,9 @@ export async function enrollmentRoutes(fastify: FastifyInstance): Promise<void> 
   fastify.addHook('preHandler', fastify.authenticate);
 
   fastify.get('/', async (request) => {
-    const { student, branch, status } = request.query as { student?: string; branch?: string; status?: string };
+    const queryParams = request.query as Record<string, string>;
+    const { page, limit } = paginationSchema.parse(queryParams);
+    const { student, course, branch, teacher, status } = queryParams;
     const authUser = request.authUser!;
     const filter: Record<string, unknown> = {};
 
@@ -24,20 +27,47 @@ export async function enrollmentRoutes(fastify: FastifyInstance): Promise<void> 
       }
       filter.branch = branch ? branch : { $in: authUser.branches };
       if (branch) assertBranchAccess(authUser, branch);
-      if (student) filter.student = student;
     } else {
-      if (student) filter.student = student;
       if (branch) filter.branch = branch;
     }
 
     if (status) filter.status = status;
 
-    const enrollments = await Enrollment.find(filter)
-      .populate('student', 'name email')
-      .populate('course', 'name category fee')
-      .populate('branch', 'name code')
-      .populate('teacher', 'name email');
-    return { enrollments };
+    if (authUser.role !== UserRole.STUDENT && student) {
+      const matchingStudents = await Student.find({ name: { $regex: student, $options: 'i' } }).select('_id');
+      filter.student = { $in: matchingStudents.map(s => s._id) };
+    }
+    
+    if (course) {
+      const matchingCourses = await Course.find({ name: { $regex: course, $options: 'i' } }).select('_id');
+      filter.course = { $in: matchingCourses.map(c => c._id) };
+    }
+
+    if (teacher) {
+      const matchingTeachers = await Teacher.find({ name: { $regex: teacher, $options: 'i' } }).select('_id');
+      filter.teacher = { $in: matchingTeachers.map(t => t._id) };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [enrollments, total] = await Promise.all([
+      Enrollment.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .populate('student', 'name email')
+        .populate('course', 'name category fee')
+        .populate('branch', 'name code')
+        .populate('teacher', 'name email')
+        .sort({ createdAt: -1 }),
+      Enrollment.countDocuments(filter)
+    ]);
+
+    return {
+      data: enrollments,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   });
 
   fastify.get('/:id', async (request) => {

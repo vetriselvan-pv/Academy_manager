@@ -128,7 +128,7 @@ export function StudentFormModal({ open, onClose, student }: StudentFormModalPro
     }
   }
 
-  const branchOptions = (branches ?? []).map((branch) => ({ value: branch._id, label: `${branch.name} (${branch.code})` }))
+  const branchOptions = (branches?.data ?? []).map((branch) => ({ value: branch._id, label: `${branch.name} (${branch.code})` }))
 
   return (
     <Modal open={open} onClose={onClose} title={isEditing ? `Edit ${student!.name}` : 'Create student'} size="lg">

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import type { EnrollmentResponse, EnrollmentsResponse } from '@/types/api'
+import type { PaginatedResponse, EnrollmentResponse } from '@/types/api'
 import type { EnrollmentStatus } from '@/types/enums'
 import type { Enrollment } from '@/types/models'
 
@@ -27,9 +27,9 @@ export interface UpdateEnrollmentPayload {
 }
 
 export const enrollmentsApi = {
-  async list(filters: EnrollmentFilters = {}): Promise<Enrollment[]> {
-    const { data } = await apiClient.get<EnrollmentsResponse>('/enrollments', { params: filters })
-    return data.enrollments
+  async list(filters: EnrollmentFilters & Record<string, any>): Promise<PaginatedResponse<Enrollment>> {
+    const { data } = await apiClient.get<PaginatedResponse<Enrollment>>('/enrollments', { params: filters })
+    return data
   },
 
   async get(id: string): Promise<Enrollment> {

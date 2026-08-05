@@ -65,8 +65,8 @@ export function TeacherFormModal({ open, onClose, teacher }: TeacherFormModalPro
 
   const { data: branches } = useBranches()
   const { data: courses } = useCourses()
-  const branchOptions = (branches ?? []).map((branch) => ({ value: branch._id, label: branch.name }))
-  const courseOptions = (courses ?? []).map((course) => ({ value: course._id, label: course.name }))
+  const branchOptions = (branches?.data ?? []).map((branch) => ({ value: branch._id, label: branch.name }))
+  const courseOptions = (courses?.data ?? []).map((course) => ({ value: course._id, label: course.name }))
 
   const createTeacher = useCreateTeacher()
   const updateTeacher = useUpdateTeacher()

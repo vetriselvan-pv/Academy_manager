@@ -1,114 +1,175 @@
-import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Ban, GraduationCap, Pencil, Plus } from 'lucide-react'
-import { toast } from 'sonner'
-import { branchesApi } from '@/api/branches.api'
-import { useAuth } from '@/auth/AuthContext'
-import { hasPermission, isStudent, isSuperAdmin, isTeacher } from '@/auth/permissions'
-import { Badge, type BadgeProps } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { Input, Select } from '@/components/ui/Input'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { getApiErrorMessage } from '@/lib/apiClient'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import { ENROLLMENT_STATUS_LABELS, EnrollmentStatus, Permission } from '@/types/enums'
-import { refId, refLabel, type Enrollment } from '@/types/models'
-import { EditEnrollmentModal } from './EditEnrollmentModal'
-import { EnrollmentFormModal } from './EnrollmentFormModal'
-import { useCancelEnrollment, useEnrollments } from './useEnrollments'
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Ban, GraduationCap, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { branchesApi } from "@/api/branches.api";
+import { useAuth } from "@/auth/AuthContext";
+import {
+  hasPermission,
+  isStudent,
+  isSuperAdmin,
+  isTeacher,
+} from "@/auth/permissions";
+import { Badge, type BadgeProps } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { getApiErrorMessage } from "@/lib/apiClient";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  ENROLLMENT_STATUS_LABELS,
+  EnrollmentStatus,
+  Permission,
+} from "@/types/enums";
+import { refId, refLabel, type Enrollment } from "@/types/models";
+import { EditEnrollmentModal } from "./EditEnrollmentModal";
+import { EnrollmentFormModal } from "./EnrollmentFormModal";
+import { useCancelEnrollment, useEnrollments } from "./useEnrollments";
 
-const STATUS_OPTIONS = Object.values(EnrollmentStatus).map((value) => ({ value, label: ENROLLMENT_STATUS_LABELS[value] }))
+const STATUS_OPTIONS = Object.values(EnrollmentStatus).map((value) => ({
+  value,
+  label: ENROLLMENT_STATUS_LABELS[value],
+}));
 
-const STATUS_TONE: Record<EnrollmentStatus, BadgeProps['tone']> = {
-  ACTIVE: 'green',
-  COMPLETED: 'blue',
-  CANCELLED: 'slate',
-}
+const STATUS_TONE: Record<EnrollmentStatus, BadgeProps["tone"]> = {
+  ACTIVE: "green",
+  COMPLETED: "blue",
+  CANCELLED: "slate",
+};
 
 export function EnrollmentsPage() {
-  const { user } = useAuth()
-  const studentUser = isStudent(user)
-  const canManage = hasPermission(user, Permission.MANAGE_ENROLLMENTS)
-  const canCreate = canManage || studentUser
-  const canCancelRows = canManage || studentUser
+  const { user } = useAuth();
+  const studentUser = isStudent(user);
+  const canManage = hasPermission(user, Permission.MANAGE_ENROLLMENTS);
+  const canCreate = canManage || studentUser;
+  const canCancelRows = canManage || studentUser;
 
-  const [filters, setFilters] = useState<Record<string, string>>({})
-  const [creating, setCreating] = useState(false)
-  const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null)
-  const [cancelling, setCancelling] = useState<Enrollment | null>(null)
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [debouncedFilters, setDebouncedFilters] = useState<
+    Record<string, string>
+  >({});
+  const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
+  const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(
+    null,
+  );
+  const [cancelling, setCancelling] = useState<Enrollment | null>(null);
 
-  // Students can't filter by branch and the status filter is applied client-side for them so
-  // the full unfiltered list stays available for the "already enrolled" duplicate check below.
-  const { data: enrollments, isLoading } = useEnrollments(
-    studentUser ? {} : { branch: filters.branch || undefined, status: (filters.status as EnrollmentStatus) || undefined },
-  )
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [filters]);
+
+  const { data: response, isLoading } = useEnrollments(
+    studentUser
+      ? { page, limit: 10 }
+      : { ...debouncedFilters, page, limit: 10 },
+  );
 
   const { data: allBranches } = useQuery({
-    queryKey: ['branches'],
+    queryKey: ["branches"],
     queryFn: () => branchesApi.list(),
     enabled: isSuperAdmin(user),
-  })
+  });
 
   const branchOptions = isSuperAdmin(user)
-    ? (allBranches ?? []).map((branch) => ({ value: branch._id, label: branch.name }))
+    ? (allBranches?.data ?? []).map((branch) => ({
+        value: branch._id,
+        label: branch.name,
+      }))
     : isTeacher(user)
-      ? (user.branches ?? []).map((branch) => ({ value: refId(branch) ?? '', label: refLabel(branch) }))
-      : []
+      ? (user.branches ?? []).map((branch) => ({
+          value: refId(branch) ?? "",
+          label: refLabel(branch),
+        }))
+      : [];
 
-  const cancelEnrollment = useCancelEnrollment()
+  const cancelEnrollment = useCancelEnrollment();
 
-  const visibleEnrollments = useMemo(() => {
-    if (!enrollments) return []
-    return enrollments.filter((enrollment) => {
-      if (filters.status && enrollment.status !== filters.status) return false
-      if (filters.branch && refId(enrollment.branch) !== filters.branch) return false
-      
-      if (filters.student && !refLabel(enrollment.student).toLowerCase().includes(filters.student.toLowerCase())) return false
-      if (filters.course && !refLabel(enrollment.course).toLowerCase().includes(filters.course.toLowerCase())) return false
-      if (filters.teacher && enrollment.teacher && !refLabel(enrollment.teacher).toLowerCase().includes(filters.teacher.toLowerCase())) return false
-      if (filters.batchTiming && enrollment.batchTiming && !enrollment.batchTiming.toLowerCase().includes(filters.batchTiming.toLowerCase())) return false
-      
-      return true
-    })
-  }, [enrollments, filters])
+  const visibleEnrollments = response?.data ?? [];
+  const totalPages = response?.totalPages ?? 1;
 
   function handleFilterChange(key: string, value: string) {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleCancel() {
-    if (!cancelling) return
+    if (!cancelling) return;
     try {
-      await cancelEnrollment.mutateAsync(cancelling._id)
-      toast.success('Enrollment cancelled')
-      setCancelling(null)
+      await cancelEnrollment.mutateAsync(cancelling._id);
+      toast.success("Enrollment cancelled");
+      setCancelling(null);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Could not cancel the enrollment'))
+      toast.error(getApiErrorMessage(error, "Could not cancel the enrollment"));
     }
   }
 
   const columns: DataTableColumn<Enrollment>[] = [
-    { key: 'student', header: 'Student', filterable: true, render: (e) => <span className="font-medium text-slate-900">{refLabel(e.student)}</span> },
-    { key: 'course', header: 'Course', filterable: true, render: (e) => refLabel(e.course) },
-    { key: 'branch', header: 'Branch', filterable: true, filterOptions: branchOptions, render: (e) => refLabel(e.branch) },
-    { key: 'teacher', header: 'Teacher', filterable: true, render: (e) => (e.teacher ? refLabel(e.teacher) : '—') },
-    { key: 'batchTiming', header: 'Batch timing', filterable: true, render: (e) => e.batchTiming || '—' },
     {
-      key: 'status',
-      header: 'Status',
+      key: "student",
+      header: "Student",
+      filterable: true,
+      render: (e) => (
+        <span className="font-medium text-slate-900">
+          {refLabel(e.student)}
+        </span>
+      ),
+    },
+    {
+      key: "course",
+      header: "Course",
+      filterable: true,
+      render: (e) => refLabel(e.course),
+    },
+    {
+      key: "branch",
+      header: "Branch",
+      filterable: true,
+      filterOptions: branchOptions,
+      render: (e) => refLabel(e.branch),
+    },
+    {
+      key: "teacher",
+      header: "Teacher",
+      filterable: true,
+      render: (e) => (e.teacher ? refLabel(e.teacher) : "—"),
+    },
+    {
+      key: "batchTiming",
+      header: "Batch timing",
+      filterable: true,
+      render: (e) => e.batchTiming || "—",
+    },
+    {
+      key: "status",
+      header: "Status",
       filterable: true,
       filterOptions: STATUS_OPTIONS,
-      render: (e) => <Badge tone={STATUS_TONE[e.status]}>{ENROLLMENT_STATUS_LABELS[e.status]}</Badge>,
+      render: (e) => (
+        <Badge tone={STATUS_TONE[e.status]}>
+          {ENROLLMENT_STATUS_LABELS[e.status]}
+        </Badge>
+      ),
     },
-    { key: 'startDate', header: 'Start date', render: (e) => formatDate(e.startDate) },
-    { key: 'feePaid', header: 'Fee paid', render: (e) => formatCurrency(e.feePaid) },
     {
-      key: 'actions',
-      header: '',
-      className: 'text-right',
+      key: "startDate",
+      header: "Start date",
+      render: (e) => formatDate(e.startDate),
+    },
+    {
+      key: "feePaid",
+      header: "Fee paid",
+      render: (e) => formatCurrency(e.feePaid),
+    },
+    {
+      key: "actions",
+      header: "",
+      className: "text-right",
       render: (e) => (
         <div className="flex justify-end gap-1">
           {canManage && (
@@ -121,7 +182,7 @@ export function EnrollmentsPage() {
               <Pencil className="size-4" />
             </button>
           )}
-          {canCancelRows && e.status === 'ACTIVE' && (
+          {canCancelRows && e.status === "ACTIVE" && (
             <button
               type="button"
               onClick={() => setCancelling(e)}
@@ -134,16 +195,16 @@ export function EnrollmentsPage() {
         </div>
       ),
     },
-  ]
+  ];
 
   return (
     <div>
       <PageHeader
-        title={studentUser ? 'My Courses' : 'Enrollments'}
+        title={studentUser ? "My Courses" : "Enrollments"}
         description={
           studentUser
-            ? 'Courses you are currently enrolled in.'
-            : 'Manage student enrollments across your branches.'
+            ? "Courses you are currently enrolled in."
+            : "Manage student enrollments across your branches."
         }
         actions={
           canCreate && (
@@ -161,18 +222,27 @@ export function EnrollmentsPage() {
         isLoading={isLoading}
         filters={filters}
         onFilterChange={handleFilterChange}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
         emptyState={
           <EmptyState
             icon={GraduationCap}
-            title={studentUser ? 'No enrollments yet' : 'No enrollments found'}
+            title={studentUser ? "No enrollments yet" : "No enrollments found"}
             description={
-              studentUser ? 'Enroll in a course to see it listed here.' : 'Try adjusting the filters, or enroll a student.'
+              studentUser
+                ? "Enroll in a course to see it listed here."
+                : "Try adjusting the filters, or enroll a student."
             }
           />
         }
       />
 
-      <EnrollmentFormModal open={creating} onClose={() => setCreating(false)} enrollments={enrollments ?? []} />
+      <EnrollmentFormModal
+        open={creating}
+        onClose={() => setCreating(false)}
+        enrollments={response?.data ?? []}
+      />
 
       <EditEnrollmentModal
         open={!!editingEnrollment}
@@ -184,7 +254,9 @@ export function EnrollmentsPage() {
         open={!!cancelling}
         title="Cancel enrollment?"
         description={
-          cancelling ? `This cancels ${refLabel(cancelling.student)}'s enrollment in ${refLabel(cancelling.course)}.` : undefined
+          cancelling
+            ? `This cancels ${refLabel(cancelling.student)}'s enrollment in ${refLabel(cancelling.course)}.`
+            : undefined
         }
         confirmLabel="Cancel enrollment"
         destructive
@@ -193,5 +265,5 @@ export function EnrollmentsPage() {
         onClose={() => setCancelling(null)}
       />
     </div>
-  )
+  );
 }

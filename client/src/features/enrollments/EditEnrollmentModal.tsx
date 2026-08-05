@@ -41,10 +41,10 @@ export function EditEnrollmentModal({ open, onClose, enrollment }: EditEnrollmen
 
   const { data: branchTeachers } = useQuery({
     queryKey: ['teachers', { branch: branchId ?? null }],
-    queryFn: () => teachersApi.list(branchId),
+    queryFn: () => teachersApi.list(branchId ? { branch: branchId } : {}),
     enabled: open && !!branchId,
   })
-  const teacherOptions = (branchTeachers ?? []).map((t) => ({ value: t._id, label: t.name }))
+  const teacherOptions = (branchTeachers?.data ?? []).map((t) => ({ value: t._id, label: t.name }))
 
   const {
     register,

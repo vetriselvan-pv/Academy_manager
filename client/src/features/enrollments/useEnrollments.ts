@@ -6,16 +6,9 @@ import {
   type UpdateEnrollmentPayload,
 } from '@/api/enrollments.api'
 
-export function useEnrollments(filters: EnrollmentFilters = {}) {
+export function useEnrollments(filters: EnrollmentFilters & Record<string, any> = {}) {
   return useQuery({
-    queryKey: [
-      'enrollments',
-      {
-        student: filters.student ?? null,
-        branch: filters.branch ?? null,
-        status: filters.status ?? null,
-      },
-    ],
+    queryKey: ['enrollments', filters],
     queryFn: () => enrollmentsApi.list(filters),
   })
 }

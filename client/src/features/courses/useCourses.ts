@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tansta
 import { coursesApi, type CreateCoursePayload, type UpdateCoursePayload } from '@/api/courses.api'
 
 
-export function useCourses(filters?: Record<string, string>) {
+export function useCourses(filters?: Record<string, any>) {
   return useQuery({
     queryKey: ['courses', filters],
     queryFn: () => coursesApi.list(filters),

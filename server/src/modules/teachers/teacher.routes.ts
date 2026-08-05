@@ -3,7 +3,7 @@ import { Teacher } from '../../models/Teacher';
 import { User } from '../../models/User';
 import { Branch } from '../../models/Branch';
 import { createTeacherSchema, updateTeacherSchema } from '../../schemas/teacher.schema';
-import { objectId } from '../../schemas/common.schema';
+import { objectId, paginationSchema } from '../../schemas/common.schema';
 import { hashPassword } from '../../utils/password';
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import { DESIGNATION_PERMISSIONS, Permission, UserRole } from '../../types';
@@ -13,13 +13,36 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.addHook('preHandler', fastify.authorize(UserRole.SUPER_ADMIN, UserRole.TEACHER));
 
   fastify.get('/', async (request) => {
-    const { branch } = request.query as { branch?: string };
+    const queryParams = request.query as Record<string, string>;
+    const { page, limit } = paginationSchema.parse(queryParams);
+    const { branch, name, email, designation } = queryParams;
+
     const filter: Record<string, unknown> = {};
     if (branch) {
       filter.branches = branch;
     }
-    const teachers = await Teacher.find(filter).populate('branches', 'name code').populate('specializedCourses', 'name category');
-    return { teachers };
+    if (name) filter.name = { $regex: name, $options: 'i' };
+    if (email) filter.email = { $regex: email, $options: 'i' };
+    if (designation) filter.designation = designation;
+
+    const skip = (page - 1) * limit;
+
+    const [teachers, total] = await Promise.all([
+      Teacher.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .populate('branches', 'name code')
+        .populate('specializedCourses', 'name category')
+        .sort({ createdAt: -1 }),
+      Teacher.countDocuments(filter)
+    ]);
+
+    return {
+      data: teachers,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   });
 
   fastify.get('/:id', async (request) => {

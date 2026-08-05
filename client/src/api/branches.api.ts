@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import type { BranchResponse, BranchesResponse } from '@/types/api'
+import type { PaginatedResponse, BranchResponse } from '@/types/api'
 import type { Branch } from '@/types/models'
 
 export interface CreateBranchPayload {
@@ -15,9 +15,9 @@ export interface CreateBranchPayload {
 export type UpdateBranchPayload = Partial<CreateBranchPayload> & { isActive?: boolean }
 
 export const branchesApi = {
-  async list(params?: Record<string, string>): Promise<Branch[]> {
-    const { data } = await apiClient.get<BranchesResponse>('/branches', { params })
-    return data.branches
+  async list(filters?: Record<string, any>): Promise<PaginatedResponse<Branch>> {
+    const { data } = await apiClient.get<PaginatedResponse<Branch>>('/branches', { params: filters })
+    return data
   },
 
   async get(id: string): Promise<Branch> {

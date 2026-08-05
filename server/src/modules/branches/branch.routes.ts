@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Branch } from '../../models/Branch';
 import { createBranchSchema, updateBranchSchema, branchQuerySchema } from '../../schemas/branch.schema';
-import { objectId } from '../../schemas/common.schema';
+import { objectId, paginationSchema } from '../../schemas/common.schema';
 import { ConflictError, NotFoundError } from '../../utils/errors';
 import { UserRole } from '../../types';
 
@@ -12,15 +12,30 @@ export async function branchRoutes(fastify: FastifyInstance): Promise<void> {
   // SUPER_ADMIN.
   fastify.get('/', async (request) => {
     const query = branchQuerySchema.parse(request.query);
+    const queryParams = request.query as Record<string, string>;
+    const { page, limit } = paginationSchema.parse(queryParams);
+
     const dbQuery: any = {};
     if (query.name) dbQuery.name = { $regex: query.name, $options: 'i' };
     if (query.code) dbQuery.code = { $regex: query.code, $options: 'i' };
     if (query.city) dbQuery.city = { $regex: query.city, $options: 'i' };
     if (query.phone) dbQuery.phone = { $regex: query.phone, $options: 'i' };
     if (query.isActive) dbQuery.isActive = query.isActive === 'true';
+    if (queryParams.address) dbQuery.address = { $regex: queryParams.address, $options: 'i' };
 
-    const branches = await Branch.find(dbQuery).populate('manager', 'name email').sort({ name: 1 });
-    return { branches };
+    const skip = (page - 1) * limit;
+
+    const [branches, total] = await Promise.all([
+      Branch.find(dbQuery).skip(skip).limit(limit).populate('manager', 'name email').sort({ name: 1 }),
+      Branch.countDocuments(dbQuery)
+    ]);
+
+    return {
+      data: branches,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   });
 
   fastify.get('/:id', async (request) => {

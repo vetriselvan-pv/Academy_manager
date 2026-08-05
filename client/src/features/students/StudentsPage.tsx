@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthContext";
@@ -28,12 +28,26 @@ export function StudentsPage() {
   const [creating, setCreating] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [deactivating, setDeactivating] = useState<Student | null>(null);
-  const [filters, setFilters] = useState<Record<string, string>>({ status: "active" });
+  const [filters, setFilters] = useState<Record<string, string>>({
+    status: "active",
+  });
+  const [debouncedFilters, setDebouncedFilters] = useState<
+    Record<string, string>
+  >({ status: "active" });
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [filters]);
 
   // Only SUPER_ADMIN needs the full branch list; teachers pick from their own already-populated branches.
   const { data: allBranches } = useBranches();
   const branchOptions = admin
-    ? (allBranches ?? []).map((branch) => ({
+    ? (allBranches?.data ?? []).map((branch) => ({
         value: branch._id,
         label: `${branch.name} (${branch.code})`,
       }))
@@ -44,37 +58,15 @@ export function StudentsPage() {
         }))
         .filter((opt) => opt.value);
 
-  const { data: students, isLoading } = useStudents();
+  const { data: response, isLoading } = useStudents({
+    ...debouncedFilters,
+    page,
+    limit: 10,
+  });
   const deactivateStudent = useDeactivateStudent();
 
-  const visibleStudents = useMemo(() => {
-    if (!students) return [];
-    return students.filter((student) => {
-      if (
-        filters.name &&
-        !student.name.toLowerCase().includes(filters.name.toLowerCase())
-      )
-        return false;
-      if (
-        filters.email &&
-        !student.email.toLowerCase().includes(filters.email.toLowerCase())
-      )
-        return false;
-      if (
-        filters.phone &&
-        student.phone &&
-        !student.phone.toLowerCase().includes(filters.phone.toLowerCase())
-      )
-        return false;
-      if (filters.branch && refId(student.branch) !== filters.branch)
-        return false;
-      if (filters.status) {
-        if (filters.status === "active" && !student.isActive) return false;
-        if (filters.status === "inactive" && student.isActive) return false;
-      }
-      return true;
-    });
-  }, [students, filters]);
+  const visibleStudents = response?.data ?? [];
+  const totalPages = response?.totalPages ?? 1;
 
   function handleFilterChange(key: string, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -187,6 +179,9 @@ export function StudentsPage() {
         isLoading={isLoading}
         filters={filters}
         onFilterChange={handleFilterChange}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
         emptyState={
           <EmptyState
             icon={Users}

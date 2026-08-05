@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import type { StudentResponse, StudentsResponse } from '@/types/api'
+import type { PaginatedResponse, StudentResponse } from '@/types/api'
 import type { Gender } from '@/types/enums'
 import type { Student } from '@/types/models'
 
@@ -34,9 +34,9 @@ export const studentsApi = {
     return data.user
   },
 
-  async list(branch?: string): Promise<Student[]> {
-    const { data } = await apiClient.get<StudentsResponse>('/students', { params: { branch } })
-    return data.students
+  async list(filters?: Record<string, any>): Promise<PaginatedResponse<Student>> {
+    const { data } = await apiClient.get<PaginatedResponse<Student>>('/students', { params: filters })
+    return data
   },
 
   async get(id: string): Promise<Student> {

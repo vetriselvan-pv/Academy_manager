@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import type { CourseResponse, CoursesResponse } from '@/types/api'
+import type { PaginatedResponse, CourseResponse } from '@/types/api'
 
 import type { Course } from '@/types/models'
 
@@ -14,9 +14,9 @@ export interface CreateCoursePayload {
 export type UpdateCoursePayload = Partial<CreateCoursePayload> & { isActive?: boolean }
 
 export const coursesApi = {
-  async list(params?: Record<string, string>): Promise<Course[]> {
-    const { data } = await apiClient.get<CoursesResponse>('/courses', { params })
-    return data.courses
+  async list(filters?: Record<string, any>): Promise<PaginatedResponse<Course>> {
+    const { data } = await apiClient.get<PaginatedResponse<Course>>('/courses', { params: filters })
+    return data
   },
 
   async get(id: string): Promise<Course> {

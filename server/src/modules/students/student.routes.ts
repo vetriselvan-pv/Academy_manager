@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { Student } from '../../models/Student';
 import { Branch } from '../../models/Branch';
 import { updateStudentSchema } from '../../schemas/student.schema';
-import { objectId } from '../../schemas/common.schema';
+import { objectId, paginationSchema } from '../../schemas/common.schema';
 import { assertBranchAccess } from '../../utils/authHelpers';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import { Permission, UserRole } from '../../types';
@@ -14,10 +14,13 @@ export async function studentRoutes(fastify: FastifyInstance): Promise<void> {
     '/',
     { preHandler: [fastify.authorize(UserRole.SUPER_ADMIN, UserRole.TEACHER), fastify.can(Permission.VIEW_STUDENTS)] },
     async (request) => {
-      const { branch } = request.query as { branch?: string };
-      const authUser = request.authUser!;
+      const queryParams = request.query as Record<string, string>;
+      const { page, limit } = paginationSchema.parse(queryParams);
+      const { branch, name, email, phone, status } = queryParams;
 
+      const authUser = request.authUser!;
       const filter: Record<string, unknown> = {};
+
       if (authUser.role === UserRole.TEACHER) {
         filter.branch = branch ? branch : { $in: authUser.branches };
         if (branch) {
@@ -27,8 +30,25 @@ export async function studentRoutes(fastify: FastifyInstance): Promise<void> {
         filter.branch = branch;
       }
 
-      const students = await Student.find(filter).populate('branch', 'name code city');
-      return { students };
+      if (name) filter.name = { $regex: name, $options: 'i' };
+      if (email) filter.email = { $regex: email, $options: 'i' };
+      if (phone) filter.phone = { $regex: phone, $options: 'i' };
+      if (status === 'active') filter.isActive = true;
+      if (status === 'inactive') filter.isActive = false;
+
+      const skip = (page - 1) * limit;
+
+      const [students, total] = await Promise.all([
+        Student.find(filter).skip(skip).limit(limit).populate('branch', 'name code city').sort({ createdAt: -1 }),
+        Student.countDocuments(filter)
+      ]);
+
+      return {
+        data: students,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      };
     },
   );
 

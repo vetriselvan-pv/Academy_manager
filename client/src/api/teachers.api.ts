@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import type { TeacherResponse, TeachersResponse } from '@/types/api'
+import type { PaginatedResponse, TeacherResponse } from '@/types/api'
 import type { Permission, TeacherDesignation } from '@/types/enums'
 import type { Teacher } from '@/types/models'
 
@@ -25,9 +25,9 @@ export interface UpdateTeacherPayload {
 }
 
 export const teachersApi = {
-  async list(branch?: string): Promise<Teacher[]> {
-    const { data } = await apiClient.get<TeachersResponse>('/teachers', { params: { branch } })
-    return data.teachers
+  async list(filters?: Record<string, any>): Promise<PaginatedResponse<Teacher>> {
+    const { data } = await apiClient.get<PaginatedResponse<Teacher>>('/teachers', { params: filters })
+    return data
   },
 
   async get(id: string): Promise<Teacher> {

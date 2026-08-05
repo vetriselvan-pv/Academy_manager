@@ -26,21 +26,26 @@ export function BranchesPage() {
   const [deactivating, setDeactivating] = useState<Branch | null>(null)
   const [filters, setFilters] = useState<Record<string, string>>({})
   const [debouncedFilters, setDebouncedFilters] = useState<Record<string, string>>({})
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedFilters(filters)
+      setPage(1)
     }, 400)
     return () => clearTimeout(handler)
   }, [filters])
 
-  const { data: branches, isLoading } = useBranches({
+  const { data: response, isLoading } = useBranches({
     ...debouncedFilters,
     ...(showInactive ? {} : { isActive: 'true' }),
+    page,
+    limit: 10
   })
   const deactivateBranch = useDeactivateBranch()
 
-  const visibleBranches = branches ?? []
+  const visibleBranches = response?.data ?? []
+  const totalPages = response?.totalPages ?? 1
 
   async function handleDeactivate() {
     if (!deactivating) return
@@ -124,6 +129,9 @@ export function BranchesPage() {
         isLoading={isLoading}
         filters={filters}
         onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
         emptyState={
           <EmptyState
             icon={Building2}

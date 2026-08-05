@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Course } from '../../models/Course';
 import { createCourseSchema, updateCourseSchema, courseQuerySchema } from '../../schemas/course.schema';
-import { objectId } from '../../schemas/common.schema';
+import { objectId, paginationSchema } from '../../schemas/common.schema';
 import { NotFoundError } from '../../utils/errors';
 import { Permission, UserRole } from '../../types';
 
@@ -10,13 +10,29 @@ export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.get('/', async (request) => {
     const query = courseQuerySchema.parse(request.query);
+    const queryParams = request.query as Record<string, string>;
+    const { page, limit } = paginationSchema.parse(queryParams);
+
     const filter: any = {};
     if (query.name) filter.name = { $regex: query.name, $options: 'i' };
     if (query.category) filter.category = query.category;
     if (query.isActive) filter.isActive = query.isActive === 'true';
+    if (queryParams.code) filter.code = { $regex: queryParams.code, $options: 'i' };
+    if (queryParams.duration) filter.duration = { $regex: queryParams.duration, $options: 'i' };
 
-    const courses = await Course.find(filter).populate('category', 'name').sort({ name: 1 });
-    return { courses };
+    const skip = (page - 1) * limit;
+
+    const [courses, total] = await Promise.all([
+      Course.find(filter).skip(skip).limit(limit).populate('category', 'name').sort({ name: 1 }),
+      Course.countDocuments(filter)
+    ]);
+
+    return {
+      data: courses,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   });
 
   fastify.get('/:id', async (request) => {

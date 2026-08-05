@@ -9,10 +9,10 @@ export function useCreateStudent() {
   })
 }
 
-export function useStudents(branch?: string) {
+export function useStudents(filters?: Record<string, any>) {
   return useQuery({
-    queryKey: ['students', { branch: branch ?? null }],
-    queryFn: () => studentsApi.list(branch),
+    queryKey: ['students', filters],
+    queryFn: () => studentsApi.list(filters),
   })
 }
 
