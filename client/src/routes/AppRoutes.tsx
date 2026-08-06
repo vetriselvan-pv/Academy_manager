@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingPage } from "@/features/landing/LandingPage";
+import { EnquiryPage } from "@/features/landing/EnquiryPage";
 import { NotFoundPage } from "@/components/StatusPages";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterStudentPage } from "@/features/auth/RegisterStudentPage";
@@ -20,6 +21,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/enquiry" element={<EnquiryPage />} />
 
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<LoginPage />} />

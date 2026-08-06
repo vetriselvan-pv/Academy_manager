@@ -6,7 +6,6 @@ import { NotFoundError } from '../../utils/errors';
 import { Permission, UserRole } from '../../types';
 
 export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
-  fastify.addHook('preHandler', fastify.authenticate);
 
   fastify.get('/', async (request) => {
     const query = courseQuerySchema.parse(request.query);
@@ -46,7 +45,7 @@ export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.post(
     '/',
-    { preHandler: [fastify.authorize(UserRole.SUPER_ADMIN, UserRole.TEACHER), fastify.can(Permission.MANAGE_COURSE_CONTENT)] },
+    { preHandler: [fastify.authenticate, fastify.authorize(UserRole.SUPER_ADMIN, UserRole.TEACHER), fastify.can(Permission.MANAGE_COURSE_CONTENT)] },
     async (request, reply) => {
       const input = createCourseSchema.parse(request.body);
       const course = await Course.create(input);
@@ -56,7 +55,7 @@ export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.patch(
     '/:id',
-    { preHandler: [fastify.authorize(UserRole.SUPER_ADMIN, UserRole.TEACHER), fastify.can(Permission.MANAGE_COURSE_CONTENT)] },
+    { preHandler: [fastify.authenticate, fastify.authorize(UserRole.SUPER_ADMIN, UserRole.TEACHER), fastify.can(Permission.MANAGE_COURSE_CONTENT)] },
     async (request) => {
       const id = objectId.parse((request.params as { id: string }).id);
       const input = updateCourseSchema.parse(request.body);
@@ -68,7 +67,7 @@ export async function courseRoutes(fastify: FastifyInstance): Promise<void> {
     },
   );
 
-  fastify.delete('/:id', { preHandler: [fastify.authorize(UserRole.SUPER_ADMIN)] }, async (request, reply) => {
+  fastify.delete('/:id', { preHandler: [fastify.authenticate, fastify.authorize(UserRole.SUPER_ADMIN)] }, async (request, reply) => {
     const id = objectId.parse((request.params as { id: string }).id);
     const course = await Course.findByIdAndUpdate(id, { isActive: false }, { new: true });
     if (!course) {
