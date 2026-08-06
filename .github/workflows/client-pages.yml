@@ -43,8 +43,11 @@ jobs:
         working-directory: ./client
         env:
           VITE_BASE_URL: '/Academy_manager/'
-          VITE_API_TARGET: ${{ secrets.VITE_API_TARGET }}
-        run: npm run build
+          VITE_API_URL: ${{ secrets.VITE_API_URL || secrets.VITE_API_TARGET }}
+          VITE_API_TARGET: ${{ secrets.VITE_API_TARGET || secrets.VITE_API_URL }}
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
         
       - name: Setup Pages
         uses: actions/configure-pages@v5
