@@ -1,7 +1,9 @@
-import { buildApp } from './app';
+import { buildApp } from "./app";
+import { connectDB } from "./config/db";
 
 // Initialize Fastify app
 const appPromise = (async () => {
+  await connectDB();
   const app = await buildApp();
   await app.ready(); // Ensures all plugins, routes, and hooks are fully registered
   return app;
@@ -10,5 +12,5 @@ const appPromise = (async () => {
 // Export a serverless request handler function as default
 export default async function handler(req: any, res: any) {
   const app = await appPromise;
-  app.server.emit('request', req, res);
+  app.server.emit("request", req, res);
 }
