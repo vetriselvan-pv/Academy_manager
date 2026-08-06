@@ -39,13 +39,11 @@ jobs:
         working-directory: ./client
         run: npm ci || npm install
 
-      - name: Build project 
+      - name: Build App
+        working-directory: ./client
         env:
           VITE_BASE_URL: '/Academy_manager/'
           VITE_API_TARGET: ${{ secrets.VITE_API_TARGET }}
-        
-      - name: Build App
-        working-directory: ./client
         run: npm run build
         
       - name: Setup Pages
