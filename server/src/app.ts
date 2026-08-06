@@ -54,7 +54,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       return;
     }
 
-    if ((error as { code?: number }).code === 11000) {
+    if ((error as any).code === 11000) {
       reply.code(409).send({ message: 'Duplicate value violates a unique constraint' });
       return;
     }

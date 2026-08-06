@@ -31,7 +31,7 @@ export async function enquiryRoutes(fastify: FastifyInstance): Promise<void> {
   });
 
   // Admin route to list enquiries
-  fastify.get("/", { preHandler: [fastify.authenticate] }, async (request) => {
+  fastify.get("/", { preHandler: [fastify.authenticate] }, async () => {
     // Basic implementation for future admin dashboard
     const enquiries = await Enquiry.find().sort({ createdAt: -1 });
     return { data: enquiries };

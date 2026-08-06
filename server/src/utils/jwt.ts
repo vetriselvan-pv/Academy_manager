@@ -6,13 +6,13 @@ import { UnauthorizedError } from './errors';
 
 export function signAccessToken(userId: string, role: UserRole): string {
   const payload: AccessTokenPayload = { sub: userId, role };
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN as any });
 }
 
 export function signRefreshToken(userId: string): { token: string; jti: string } {
   const jti = randomUUID();
   const payload: RefreshTokenPayload = { sub: userId, jti };
-  const token = jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
+  const token = jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN as any });
   return { token, jti };
 }
 
