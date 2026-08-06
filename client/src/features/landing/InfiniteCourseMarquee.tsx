@@ -1,23 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
-import { Clock, IndianRupee } from 'lucide-react'
-import { coursesApi } from '@/api/courses.api'
-import { formatCurrency } from '@/lib/utils'
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { Clock } from "lucide-react";
+import { coursesApi } from "@/api/courses.api";
+import { formatCurrency } from "@/lib/utils";
 
 export function InfiniteCourseMarquee() {
   const { data: coursesData, isLoading } = useQuery({
-    queryKey: ['public-courses'],
+    queryKey: ["public-courses"],
     queryFn: () => coursesApi.list({ isActive: true, limit: 10 }),
-  })
+  });
 
-  const courses = coursesData?.data ?? []
+  const courses = coursesData?.data ?? [];
 
   if (isLoading || courses.length === 0) {
-    return null
+    return null;
   }
 
   // Duplicate courses to create an infinite scroll effect
-  const marqueeItems = [...courses, ...courses, ...courses, ...courses]
+  const marqueeItems = [...courses, ...courses, ...courses, ...courses];
 
   return (
     <div className="relative flex overflow-x-hidden bg-brand-900 py-12">
@@ -28,11 +28,11 @@ export function InfiniteCourseMarquee() {
       <motion.div
         className="flex min-w-full shrink-0 gap-6 px-6"
         animate={{
-          x: ['0%', '-50%'],
+          x: ["0%", "-50%"],
         }}
         transition={{
           duration: 30, // Adjust speed
-          ease: 'linear',
+          ease: "linear",
           repeat: Infinity,
         }}
       >
@@ -43,7 +43,7 @@ export function InfiniteCourseMarquee() {
           >
             <div>
               <div className="mb-2 inline-flex items-center rounded-full bg-brand-500/20 px-2.5 py-0.5 text-xs font-medium text-brand-200 ring-1 ring-inset ring-brand-500/30">
-                {course.category?.name || 'Course'}
+                {course.category?.name || "Course"}
               </div>
               <h3 className="text-lg font-semibold tracking-tight text-white line-clamp-2">
                 {course.name}
@@ -62,5 +62,5 @@ export function InfiniteCourseMarquee() {
         ))}
       </motion.div>
     </div>
-  )
+  );
 }
