@@ -3,7 +3,7 @@ import { authEvents } from './authEvents'
 import { tokenStorage } from './tokenStorage'
 import type { ApiErrorBody, TokenPair } from '@/types/api'
 
-const baseURL = import.meta.env.VITE_API_URL || '/api'
+const baseURL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_TARGET || '/api'
 
 declare module 'axios' {
   interface InternalAxiosRequestConfig {

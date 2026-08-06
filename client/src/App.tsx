@@ -7,9 +7,11 @@ import { queryClient } from '@/lib/queryClient'
 import { AppRoutes } from '@/routes/AppRoutes'
 
 function App() {
+  const routerBaseName = import.meta.env.BASE_URL || '/'
+
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBaseName}>
         <AuthProvider>
           <AppRoutes />
           <Toaster position="top-right" richColors closeButton />
